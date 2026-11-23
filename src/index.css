@@ -1,0 +1,62 @@
+@import "tailwindcss";
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root {
+  --bp-navy: #102B46;
+  --bp-teal: #1E8F91;
+  --bp-blue: #236A9F;
+  --bp-sand: #E9D8BD;
+  --bp-ivory: #F7F5F0;
+  --bp-coral: #D97965;
+  --bp-gray: #354554;
+  --background: #F7F5F0;
+  --foreground: #102B46;
+  --surface: #FFFFFF;
+  --surface-muted: #E9D8BD;
+  --primary: #102B46;
+  --secondary: #236A9F;
+  --accent: #1E8F91;
+}
+
+.dark {
+  --background: #0B1D30;
+  --foreground: #F7F5F0;
+  --surface: #102B46;
+  --surface-muted: #183B5E;
+  --primary: #F7F5F0;
+  --secondary: #4EA3DF;
+  --accent: #26B0B3;
+}
+
+*,
+*::before,
+*::after,
+html,
+body,
+button,
+input,
+select,
+textarea,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: Arial, sans-serif !important;
+}
+
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

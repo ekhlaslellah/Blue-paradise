@@ -1,0 +1,56 @@
+﻿بلو برادايس — مخطط قاعدة البيانات وقاموس الحقول
+الإصدار 1.0 | التصميم منطقي وتعليمي | قاعدة Google Sheets جدول تجريبي لا Backend إنتاجي.
+معايير موحدة
+معرّفات فريدة نصية غير معاد استخدامها. ترميز البنية: D للقسم، P للمسمى، S للمقعد، E للموظف، V للشاغر، A للطلب، L للإجازة، T للتدريب، R للتقييم.
+كل جدول يحتوي عند الانتقال للإنتاج على created_at وupdated_at وcreated_by وaudit_log. تنسيق التاريخ YYYY-MM-DD والعملة JOD وحقول النص UTF-8.
+الكيانات الأساسية والمفاتيح
+الأقسام departments: department_id PK؛ name_ar؛ name_en؛ manager_position_id FK؛ planned_seats؛ parent_department_id nullable.
+المسميات positions: position_id PK؛ department_id FK؛ title_ar؛ grade؛ planned_count؛ salary_min_jod؛ salary_max_jod؛ reports_to_position_id FK؛ description.
+المقاعد seats: seat_id PK؛ position_id FK؛ department_id FK؛ seat_status؛ location_id FK؛ assigned_employee_id FK nullable.
+الموظفون employees: employee_id PK؛ seat_id FK UNIQUE active؛ display_name_alias؛ department_id FK مشتق؛ position_id FK مشتق؛ hire_date؛ employment_status؛ work_email_test؛ manager_employee_id FK nullable.
+المواقع locations: location_id PK؛ name؛ city؛ state؛ capacity؛ type؛ is_simulated.
+المستخدمون users: user_id PK؛ employee_id FK nullable؛ role_id FK؛ identity_provider_uid؛ is_active. لا تخزن كلمات مرور نصية إطلاقًا.
+الأدوار roles: role_id PK؛ role_name؛ scope؛ permissions. لا تُعرّض صلاحيات الإدارة ضمن الواجهة الأمامية.
+الشواغر vacancies: vacancy_id PK؛ position_id FK؛ seat_id FK؛ opening_date؛ status؛ employment_type؛ publish_date؛ closing_date.
+الطلبات applications: application_id PK؛ vacancy_id FK؛ candidate_alias؛ applied_at؛ stage؛ consent_flag؛ score_reference؛ source_channel.
+المقابلات interviews: interview_id PK؛ application_id FK؛ scheduled_at؛ panel_alias؛ status؛ rubric_version؛ recommendation.
+التقييمات interview_scores: score_id PK؛ interview_id FK؛ criterion_id FK؛ score؛ evaluator_alias؛ rationale.
+الحضور attendance: attendance_id PK؛ employee_id FK؛ work_date؛ scheduled_hours؛ actual_hours؛ status؛ approved_by.
+الإجازات leave_requests: leave_id PK؛ employee_id FK؛ leave_type؛ start_date؛ end_date؛ requested_days؛ status؛ manager_approval.
+التدريب training_catalog: training_id PK؛ title؛ skill_category؛ duration_hours؛ delivery_mode.
+الالتحاق بالتدريب training_enrollments: enrollment_id PK؛ employee_id FK؛ training_id FK؛ enrollment_date؛ completion_status؛ score_before؛ score_after.
+دورات الأداء performance_cycles: cycle_id PK؛ label؛ start_date؛ end_date؛ status.
+تقييم الأداء performance_reviews: review_id PK؛ employee_id FK؛ cycle_id FK؛ goals_score؛ competencies_score؛ learning_score؛ overall_score؛ review_status.
+مخصصات الرواتب payroll: payroll_id PK؛ employee_id FK؛ period؛ base_pay_jod؛ additions_jod؛ deductions_jod؛ net_pay_jod؛ payment_status.
+الخدمات services: service_id PK؛ name؛ category؛ base_price_jod؛ description؛ is_published.
+الحجوزات bookings: booking_id PK؛ service_id FK؛ guest_alias؛ start_date؛ end_date؛ amount_jod؛ booking_status.
+الحوادث والتذاكر tickets: ticket_id PK؛ category؛ related_employee_id FK nullable؛ opened_at؛ owner_role؛ priority؛ status.
+سجل الأحداث audit_events: event_id PK؛ actor_id؛ entity_type؛ entity_id؛ action؛ occurred_at؛ metadata_redacted.
+العلاقات الجوهرية
+Department 1—N Positions 1—N Seats؛ Seat 0/1—1 Employee (active).
+Position 1—N Vacancies 1—N Applications 1—N Interviews 1—N Scores.
+Employee 1—N Leave/Attendance/TrainingEnrollments/PerformanceReviews/Payroll.
+TrainingCatalog 1—N TrainingEnrollments؛ Cycle 1—N PerformanceReviews.
+Service 1—N Bookings.
+قواعد سلامة البيانات
+لا يتكرر seat_id لموظفين بحالة نشطة. لا يتجاوز عدد المقاعد الفعلية planned_count للمسمى. لا تُقبل إجازة ينتهي تاريخها قبل بدايته. لا تقبل درجة مقابلة خارج سلم التقييم. لا يسمح بعرض تقارير خاصة لمستخدم لا يمتلك الإذن.
+الحذف الحقيقي للعاملين يحتاج سياسة حفظ وثائق؛ في المحاكاة استخدم تغيير الحالة بدل إزالة التاريخ.
+خط إسناد البيانات
+الهيكل المرجعي: «الأقسام» ثم «المسميات» ثم «المقاعد» ثم «الموظفون» ثم الجداول التشغيلية. لا تنشئ Employee بلا Seat إلا في سيناريو اختبار مقصود.
+التفريق بين Sheet وBackend
+Google Sheets هنا مرجع بيانات تدريبية للتهيئة والتحليل والتصدير والاستيراد فقط. النظام الآمن مستقبلاً يحتاج قاعدة علائقية ذات مفاتيح خارجية وسياسات Row Level Security أو قواعد وصول على الخادم، واجهات API، مصادقة ومراجعة أمنية ونسخ احتياطية.
+لا تضع مفاتيح خدمة أو رموز وصول أو بيانات أسرار في المتصفح أو في برومبتات عامة.
+صلاحيات أدوار النظام المقترحة
+visitor: عرض خدمات ومحتوى منشور فقط.
+applicant: إنشاء وقراءة طلبه فقط.
+employee: مشاهدة ملفه وطلباته وأهدافه فقط.
+line_manager: تقارير فريقه واعتماد إجازات مرؤوسيه، دون رواتبهم أو ملفات المرشحين خارج التكليف.
+recruiter: ATS والفرز والمقابلات ضمن الصلاحيات.
+hr_admin: إدارة سجلات HR والموافقات وتقارير مجمعة.
+finance: الاطلاع على وحدات الرواتب المالية المعتمدة.
+system_admin: المستخدمون والإعدادات؛ لا يحق له تصفح ملفات حساسة لمجرد صفة تقنية.
+auditor: وصول مراقب مقيد ومسجل.
+حماية البيانات
+احصل على موافقة واضحة مناسبة للغرض؛ تجنب جمع الصور الشخصية والهوية في النموذج الأولي. عرّف حدًا أدنى من البيانات، وقواعد إخفاء وإلغاء هوية، وتدقيقًا لكل تعديل حساس، وعزل بيئات الاختبار.
+ورقة البيانات التدريبية
+كل البيانات المُنشأة لأسماء وأرقام وطلبات وهمية موسومة «تجريبي». مواقع وضيوف وخدمات وهمية؛ لا يوجد اتصال بمنصات حجوزات أو بوابات دفع حقيقية.
